@@ -89,14 +89,14 @@ for c in range(len(cat_features)):
 
 
 # Recreate training and test set
-data_label = data_le.iloc[np.random.permutation(len(data_label))]
-x = data_le.iloc[:, :130]
-y = data_le.iloc[:, 130:]
+data_label = data_label.iloc[np.random.permutation(len(data_label))]
+x = data_label.iloc[:, :130]
+y = data_label.iloc[:, 130:]
 
 pca = PCA(n_components=2)
 x_trans = pca.fit_transform(x)
 
-plt.figure(figsize=(12, 10))
+plt.figure(figsize=(16, 8))
 plt.scatter(x_trans[:, 0], x_trans[:, 1], c=np.array(y), 
             edgecolor='none', s=40,
             cmap=plt.cm.get_cmap('winter', 2))
