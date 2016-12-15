@@ -7,6 +7,8 @@ import pylab
 from scipy import stats
 from copy import deepcopy
 
+from sklearn.decomposition import PCA
+
 train = pd.read_csv('train.csv')
 test = pd.read_csv('test.csv')
 
@@ -82,23 +84,29 @@ data_d_all = pd.concat((train_d, test_d))
 data_label = deepcopy(data_d_all)
 # Transforming all alphabetical data into categorical numerics
 for c in range(len(cat_features)):
-    data_label[cat_features[c]] = data_label[cat_features[1]].astype('category').cat.codes
+    data_label[cat_features[c]] = data_label[cat_features[c]].astype('category').cat.codes
 # print "After cat.codes: ", data_label.head(10)
-data_d_all = pd.get_dummies(data=data_d_all, columns=cat_features)
-# print "After get_dummies: ", data_d_all.head(10)
+
 
 # Recreate training and test set
-data_d_all = data_d_all.iloc[np.random.permutation(len(data_d_all))]
-data_d_all.reset_index(drop=True, inplace=True)
-x = data_d_all.drop(['Target'], axis=1)
-y = data_d_all.Target
-print x.head(5), "\n", y.head(5)
+data_label = data_le.iloc[np.random.permutation(len(data_label))]
+x = data_le.iloc[:, :130]
+y = data_le.iloc[:, 130:]
 
-train_example = 100000
-x_train = x[:train_examples]
-x_test = x[train_examples:]
-y_train = y[:train_examples]
-y_test = y[train_examples:]
+pca = PCA(n_components=2)
+x_trans = pca.fit_transform(x)
+
+plt.figure(figsize=(12, 10))
+plt.scatter(x_trans[:, 0], x_trans[:, 1], c=np.array(y), 
+            edgecolor='none', s=40,
+            cmap=plt.cm.get_cmap('winter', 2))
+plt.xlabel('Component 1')
+plt.ylabel('Component 2')
+plt.colorbar()
+plt.show()
+
+
+
 
 
 
