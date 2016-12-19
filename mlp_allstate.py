@@ -35,7 +35,7 @@ print "train x: ", train_mlp_x[1].shape, "train y: ", train_mlp_y.shape
 
 def mlp_model():
     model = Sequential()
-    model.add(Dense(128, input_dim=train_mlp_x.shape[1])) #all features (1153 nodes) as input, 128 nodes in hidden layers
+    model.add(Dense(256, input_dim=train_mlp_x.shape[1])) #all features (1153 nodes) as input, 128 nodes in hidden layers
     model.add(Activation('relu'))
     model.add(Dense(1)) # 1 node output layers
     model.compile(loss='mae', optimizer='adam')
@@ -43,7 +43,7 @@ def mlp_model():
 
 # Uncomment below if need to train MLP
 mlp = mlp_model()
-sys.stdout = open('mlp_v1_out.txt', 'w')
+sys.stdout = open('mlp_v2_out.txt', 'w')
 fit = mlp.fit(train_mlp_x, train_mlp_y, validation_split=0.2, batch_size=128, nb_epoch=40, verbose=1)
 hist = fit.history
 print "Validation loss by epoch 40: ", hist['val_loss'][-1]
@@ -69,7 +69,7 @@ def plot_mlp(hist, title):
     ax2.legend()
     plt.show()
 
-
+plot_mlp(models_history['mlp_1'], 'mlp_1')
 
 
 
