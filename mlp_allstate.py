@@ -81,24 +81,25 @@ def mlp_cross_validation(mlp_function, train_x_data, nfolds=3):
     for train_index, test_index in kf.split(train_x_data):
         x_train, x_test = train_mlp_x[train_index], train_mlp_x[test_index]
         y_train, y_test = train_mlp_y[train_index], train_mlp_y[test_index]
-        mlp = mlp_function
+        mlp = mlp_function()
         mlp.fit(x_train, y_train, \
                 validation_split=0.2, \
                 batch_size=128, \
-                np_epoch=30, \
+                nb_epoch=30, \
                 verbose=1, \
-                callbacks=EarlyStopping(monitor="val_loss", patience=4))
+                callbacks=[EarlyStopping(monitor="val_loss", patience=4)])
         pred = mlp.predict(x_test, batch_size=128)
         score = mean_absolute_error(pred, y_test)
         val_score[counter] = score
         print "Fold: {}, MAE Score: {}".format(counter, score)
-        avg_mae = sum(val_score) / nfolds
-        print "{} Fold CV Score (average MAE): {}".format(nfolds, avg_mae)
-        return avg_mae
+        counter += 1
+    avg_mae = sum(val_score) / nfolds
+    print "{} Fold CV Score (average MAE): {}".format(nfolds, avg_mae)
+    return avg_mae
 
 def mlp_model_2():
     model = Sequential()
-    model.add(Dense(256, input_dim=train_mlp_x.shape[1]))
+    model.add(Dense(128, input_dim=train_mlp_x.shape[1]))
     model.add(Activation('relu'))
     model.add(Dropout(0.5))
     model.add(Dense(64))
