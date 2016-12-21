@@ -50,13 +50,13 @@ def mlp_cross_validation(mlp_function, train_x_data, nfolds=3):
         counter += 1
     avg_mae = sum(val_score) / nfolds
     print "{} Fold CV Score (average MAE): {}".format(nfolds, avg_mae)
-    return avg_mae
+    return score
 
 # Define search space to be used in hyperopt
-space = {'hidden_1_units': hp.choice('hidden_1_units', [256, 512, 768, 1024]), /
-        'hidden_2_units': hp.choice('hidden_2_units', [128, 256, 512, 768]), /
-        'hidden_1_dropout': hp.choice('hidden_1_dropout', 0.1, 0.6), /
-        'hidden_2_dropout': hp.choice('hidden_2_dropout', 0.1, 0.5) /
+space = {'hidden_1_units': hp.choice('hidden_1_units', [256, 512, 768, 1024]), \
+        'hidden_2_units': hp.choice('hidden_2_units', [128, 256, 512, 768]), \
+        'hidden_1_dropout': hp.choice('hidden_1_dropout', [0.1, 0.6]), \
+        'hidden_2_dropout': hp.choice('hidden_2_dropout', [0.1, 0.5]) \
         }
 
 
@@ -66,21 +66,22 @@ def hyperopt_search(params):
     def mlp_model():
         model = Sequential()
         model.add(Dense(params['hidden_1_units'], input_dim=train_mlp_x.shape[1]))
-        model.add(Activation=('relu'))
+        model.add(Activation('relu'))
         model.add(Dropout(params['hidden_1_dropout']))
 
         model.add(Dense(params['hidden_2_units']))
-        model.add(Activation=('relu'))
+        model.add(Activation('relu'))
         model.add(Dropout(params['hidden_2_dropout']))
 
         model.add(Dense(1))
         model.compile(loss='mae', optimizer='adam', metrics=['mae'])
+        return model
 
-    cv_score = mlp_cross_validation(mlp_model)
+    cv_score = mlp_cross_validation(mlp_model, train_mlp_x)
     return {'loss': cv_score, 'status': STATUS_OK}
 
-sys.stdout = open('hyperopt_1.log', 'w')
-trials = Trials()
+sys.stdout = open('hyperopt/hyperopt_1.log', 'w')
 
+trials = Trials()
 best = fmin(hyperopt_search, space, algo=tpe.suggest, max_evals=50, trials=trials)
 
