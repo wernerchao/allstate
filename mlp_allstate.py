@@ -45,7 +45,7 @@ print "train x: ", train_mlp_x[1].shape, "train y: ", train_mlp_y.shape
 
 # # Uncomment below if need to train MLP
 # mlp = mlp_model_1()
-# sys.stdout = open('mlp_v2_out.txt', 'w')
+# sys.stdout = open('models/mlp_v2_out.txt', 'w')
 # fit = mlp.fit(train_mlp_x, train_mlp_y, validation_split=0.2, batch_size=128, nb_epoch=40, verbose=1)
 # hist = fit.history
 # print "Validation loss by epoch 40: ", hist['val_loss'][-1]
