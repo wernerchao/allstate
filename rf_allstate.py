@@ -40,7 +40,7 @@ def minMe(params):
     # Hyperopt tuning for hyperparameters
     from sklearn.model_selection import cross_val_score
     from sklearn.ensemble import RandomForestRegressor
-    from hyperopt import hp, fmin, tpe, STATUS_OK, Trials
+    from hyperopt import STATUS_OK
 
     try:
         import dill as pickle
@@ -57,7 +57,6 @@ def minMe(params):
     return {'loss': -acc, 'status': STATUS_OK}
 
 best = fmin(fn=minMe, space=space_rf, trials=trials, algo=tpe.suggest, max_evals=100)
-
 
 print "Best: ", best
 

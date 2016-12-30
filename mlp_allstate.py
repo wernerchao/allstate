@@ -110,9 +110,3 @@ def mlp_model_2():
     return model
 
 mlp_cross_validation(mlp_model_2, train_mlp_x, 3)
-
-
-
-
-
-
