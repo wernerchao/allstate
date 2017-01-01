@@ -1,5 +1,8 @@
+# In this module, we do an exhaustive search to tune the hyperparmeters for our MLP model.
+# We've already run a quick & simple MLP model check with mlp_allstate.py previously.
+# We use hyperopt to search the optimum combination of hyperparameters.
+
 import tensorflow as tf
-tf.python.control_flow_ops = tf
 
 import sys
 
@@ -16,7 +19,7 @@ from hyperopt import fmin, tpe, hp, STATUS_OK, Trials
 from sklearn.model_selection import KFold
 from sklearn.metrics import mean_absolute_error
 
-# Preprocessing data. Note we don't log the loss.
+# Preprocessing data. Note that we don't log the output variable.
 train_mlp = pd.read_csv('train.csv')
 
 # Making columns for features
@@ -29,28 +32,43 @@ train_mlp_y = np.array(train_mlp['loss'])
 print "train x: ", train_mlp_x[1].shape, "train y: ", train_mlp_y.shape
 
 
+# Cross validation function to check for overfitting.
 def mlp_cross_validation(mlp_function, train_x_data, nfolds=3):
-    kf = KFold(n_splits=nfolds, shuffle=True, random_state=31337)
+    ''' A custom CV check to prevent overfitting '''
+    kf = KFold(n_splits=nfolds, shuffle=True, random_state=42)
     val_score = np.zeros((nfolds))
-    counter = 1
-    for train_index, test_index in kf.split(train_x_data):
+
+    for counter, (train_index, test_index) in enumerate(kf.split(train_x_data)):
         x_train, x_test = train_mlp_x[train_index], train_mlp_x[test_index]
         y_train, y_test = train_mlp_y[train_index], train_mlp_y[test_index]
         mlp = mlp_function()
-        mlp.fit(x_train, y_train, \
-                validation_split=0.2, \
-                batch_size=128, \
-                nb_epoch=30, \
-                verbose=1, \
-                callbacks=[EarlyStopping(monitor="val_loss", patience=4)])
+
+        # Fit and output log file.
+        saveout = sys.stdout
+        out_file = open('models/mlp_cv_v2_out_{}.txt'.format(counter), 'w')
+        sys.stdout = out_file
+        fit = mlp.fit(x_train, y_train, \
+                      validation_split=0.2, \
+                      batch_size=128, \
+                      nb_epoch=30, \
+                      verbose=1, \
+                      callbacks=[EarlyStopping(monitor="val_loss", patience=4)])
+        hist = fit.history
+        print "Validation loss by epoch 30: ", hist['val_loss'][-1]
+        print "History has: ", hist
+
+        # Predict.
         pred = mlp.predict(x_test, batch_size=128)
         score = mean_absolute_error(pred, y_test)
         val_score[counter] = score
         print "Fold: {}, MAE Score: {}".format(counter, score)
-        counter += 1
+        sys.stdout = saveout
+        out_file.close()
+
     avg_mae = sum(val_score) / nfolds
     print "{} Fold CV Score (average MAE): {}".format(nfolds, avg_mae)
-    return score
+    return avg_mae
+
 
 # Define search space to be used in hyperopt
 space = {'hidden_1_units': hp.choice('hidden_1_units', [256, 512, 768, 1024]), \
@@ -84,4 +102,3 @@ sys.stdout = open('hyperopt/hyperopt_1.log', 'w')
 
 trials = Trials()
 best = fmin(hyperopt_search, space, algo=tpe.suggest, max_evals=50, trials=trials)
-
