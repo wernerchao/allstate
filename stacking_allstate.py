@@ -1,6 +1,8 @@
 # This module stacks xgboost and MLP prediction using LinearRegression.
 # Predicted weights from CV sets is used as training features.
 # Predicted weights from test set is used as testing features.
+# Final Stacker MAE: 1136.0091763. 
+# Compared to single model xgboost: 1151.51901659, MLP: 1146.52636433.
 
 import numpy as np
 import pandas as pd
@@ -67,6 +69,4 @@ reg = LinearRegression()
 reg.fit(np.log(layer_1_train_x), np.log(layer_1_train_y))
 pred = reg.predict(np.log(layer_1_test_x))
 final_score = reg.score(np.log(layer_1_test_x), layer_1_test_y)
-final_mae = mean_absolute_error(layer_1_test_y, np.exp(pred))
 print "Final stacker MAE: ", final_mae
-print "Final Score: ", final_score

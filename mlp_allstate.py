@@ -33,7 +33,7 @@ train_mlp_x = np.array(train_mlp[features_mlp])
 train_mlp_y = np.array(train_mlp['loss'])
 print "train x: ", train_mlp_x[1].shape, "train y: ", train_mlp_y.shape
 
-mlp_x_train, mlp_x_test, mlp_y_train, mlp_y_test = train_test_split(train_mlp_x, train_mlp_y, test_size=0.25, random_state=42)
+mlp_x_train, mlp_x_test, mlp_y_train, mlp_y_test = train_test_split(train_mlp_x, train_mlp_y, test_size=0.25, random_state=31337)
 print "MLP Training set X: ", mlp_x_train.shape, ". Y: ", mlp_y_train.shape
 print "MLP Testing set X: ", mlp_x_test.shape, ". Y: ", mlp_y_test.shape
 
@@ -111,7 +111,7 @@ def mlp_model_2():
 # As we are building a more complex model, it might overfit. We setup a CV check to make sure we don't overfit.
 def mlp_cross_validation(mlp_function, train_x_data, nfolds=3):
     ''' A custom CV check to prevent overfitting '''
-    kf = KFold(n_splits=nfolds, shuffle=True, random_state=42)
+    kf = KFold(n_splits=nfolds, shuffle=True, random_state=31337)
     val_score = np.zeros((nfolds))
 
     for counter, (train_index, test_index) in enumerate(kf.split(train_x_data)):

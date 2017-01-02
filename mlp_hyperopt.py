@@ -35,7 +35,7 @@ print "train x: ", train_mlp_x[1].shape, "train y: ", train_mlp_y.shape
 # Cross validation function to check for overfitting.
 def mlp_cross_validation(mlp_function, train_x_data, nfolds=3):
     ''' A custom CV check to prevent overfitting '''
-    kf = KFold(n_splits=nfolds, shuffle=True, random_state=42)
+    kf = KFold(n_splits=nfolds, shuffle=True, random_state=31337)
     val_score = np.zeros((nfolds))
 
     for counter, (train_index, test_index) in enumerate(kf.split(train_x_data)):
