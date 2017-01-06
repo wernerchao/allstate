@@ -56,7 +56,10 @@ test_mlp = np.loadtxt('ensemble/mlp_pred_test.txt')
 ### Train layer 2 model. We use linear regression
 # Aggregate the XGBoost and MLP weights as X
 layer_1_train_x = np.vstack((train_xgb_folds, train_mlp_folds)).T
+
 layer_1_test_x = np.vstack((test_xgb, test_mlp)).T
+print test_xgb.shape
+
 layer_1_train_y = mlp_y_train
 layer_1_test_y = mlp_y_test
 print "Xtrain shape:", layer_1_train_x.shape
@@ -68,5 +71,5 @@ print "ytest shape:", layer_1_test_y.shape
 reg = LinearRegression()
 reg.fit(np.log(layer_1_train_x), np.log(layer_1_train_y))
 pred = reg.predict(np.log(layer_1_test_x))
-final_score = reg.score(np.log(layer_1_test_x), layer_1_test_y)
+final_mae = mean_absolute_error(pred, layer_1_test_y) #TODO: need to log or exp
 print "Final stacker MAE: ", final_mae
