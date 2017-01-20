@@ -63,7 +63,7 @@ if __name__ == '__main__':
     holdout_mae = mean_absolute_error(np.exp(pred), layer_1_test_y)
     print "Stacker MAE (hold out): ", holdout_mae
 
-    # TODO: need to get the weights from linear regression, & use it as ratio to multiply the prediction from xgb & mlp.
+    # TODO: need to get the final prediction from the stacking model.
     test_set = pd.read_csv('../data/test.csv')
     print test_set.shape
     test_x, test_y = data_prep.data_prep(test_set, False)
