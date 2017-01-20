@@ -45,11 +45,13 @@ if __name__ == '__main__':
     print 'Loading weghts from models (prediction made on whole data set) as test sets...'
     test_xgb = np.loadtxt('model_output/xgb_pred_test.txt')
     test_mlp = np.loadtxt('model_output/mlp_pred_test.txt')
+    print "test_mlp: ", test_mlp.shape
 
     ### Train layer 2 model. We use linear regression
     print 'Aggregating XGBoost and MLP weights as x_train & x_test...'
     layer_1_train_x = np.vstack((train_xgb_folds, train_mlp_folds)).T
     layer_1_test_x = np.vstack((test_xgb, test_mlp)).T
+    print "layer_1_test_x: ", layer_1_test_x.shape
 
     layer_1_train_y = mlp_y_train # Note: it's not logged
     layer_1_test_y = mlp_y_test # Note: it's not logged
@@ -63,7 +65,9 @@ if __name__ == '__main__':
 
     # TODO: need to get the weights from linear regression, & use it as ratio to multiply the prediction from xgb & mlp.
     test_set = pd.read_csv('../data/test.csv')
+    print test_set.shape
     test_x, test_y = data_prep.data_prep(test_set, False)
-    final_pred = reg.predict(test_x)
-    final_df = pd.DataFrame(data={'id':test['id'], 'prediction':final_pred})
+    final_pred = reg.predict(layer_1_test_x)
+    print final_pred.shape
+    final_df = pd.DataFrame(data={'id':test_set['id'], 'prediction':final_pred})
     final_df.to_csv('submission_1.txt')
