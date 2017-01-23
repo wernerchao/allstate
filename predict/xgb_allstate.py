@@ -15,23 +15,6 @@ from sklearn.model_selection import KFold
 if __name__ == '__main__':
     # Preprocess data for xgboost.
     train_xg = pd.read_csv('../data/train.csv')
-    n_train = len(train_xg)
-    print "Whole data set size: ", n_train
-    train_xg['log_loss'] = np.log(train_xg['loss'])
-
-    # Creating columns for features, and categorical features
-    features_col = [x for x in train_xg.columns if x not in ['id', 'loss', 'log_loss']]
-    cat_features_col = [x for x in train_xg.select_dtypes(include=['object']).columns if x not in ['id', 'loss', 'log_loss']]
-    for c in range(len(cat_features_col)):
-        train_xg[cat_features_col[c]] = train_xg[cat_features_col[c]].astype('category').cat.codes
-
-    train_xg_x = np.array(train_xg[features_col])
-    train_xg_y = np.array(train_xg['log_loss'])
-
-    # xg_x_train, xg_x_test, xg_y_train, xg_y_test  = train_test_split(train_xg_x, train_xg_y, test_size=0.25, random_state=31337)
-    # print "XGB Training set X: ", xg_x_train.shape, ". Y: ", xg_y_train.shape
-    # print "XGB Testing set X: ", xg_x_test.shape, ". Y: ", xg_y_test.shape
-
 
     # Training xgboost. Out-of-fold prediction
     folds = KFold(n_splits=3, shuffle=False)
@@ -63,5 +46,5 @@ if __name__ == '__main__':
                             colsample_bytree=0.6, \
                             subsample=0.9)
     xgboosting.fit(train_xg_x, train_xg_y)
-    train_xg = pd.read_csv('../data/test.csv') #TODO: need to preprocess the data just like the train set.
-    np.savetxt('xgb_pred_test.txt', np.exp(xgboosting.predict(train_xg)))
+    test_xg = pd.read_csv('../data/test.csv') #TODO: need to preprocess the data just like the train set.
+    np.savetxt('xgb_pred_test.txt', np.exp(xgboosting.predict(test_xg)))
