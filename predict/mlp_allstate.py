@@ -51,19 +51,18 @@ def mlp_model():
 def cross_validate_mlp(train_x, train_y, mlp_func, nfolds=3):
     folds = KFold(n_splits=nfolds, shuffle=True, random_state=31337)
     val_scores = np.zeros((nfolds,))
-    for k,(train_index, test_index) in enumerate(folds):
-        mlp = mlp_func()
+    for k,(train_index, test_index) in enumerate(folds.split(train_x)):
         xtr, ytr = train_x[train_index], train_y[train_index]
         xte, yte = train_x[test_index], train_y[test_index]
         early_stopping = EarlyStopping(monitor='val_loss', patience=5)
-        fit = mlp.fit(xtr, ytr, batch_size=128, \
-                      nb_epoch=30, verbose=1, callbacks=[early_stopping])
-        pred = mlp.predict(xte, batch_size=256)
+        fit = mlp_func.fit(xtr, ytr, batch_size=128, \
+                           nb_epoch=30, verbose=1)
+        pred = mlp_func.predict(xte, batch_size=256)
         score = mean_absolute_error(yte, pred)
         val_scores[k] += score
         print 'Fold {}, MAE: {}'.format(k, score)
-        np.savetxt('ensemble/mlp_pred_fold_{}.txt'.format(k), pred)
-        np.savetxt('ensemble/mlp_test_fold_{}.txt'.format(k), yte)
+        np.savetxt('mlp_pred_fold_{}.txt'.format(k), pred)
+        np.savetxt('mlp_test_fold_{}.txt'.format(k), yte)
     avg_score = np.sum(val_scores) / float(nfolds)
     print '{}-fold CV score: {}'.format(nfolds, avg_score)
     return avg_score
@@ -101,22 +100,22 @@ if __name__ == '__main__':
     test_mlp = pd.read_csv('../data/test.csv')
     test_mlp_x, test_mlp_y = data_prep.data_prep(test_mlp, False)
 
-    # (2) Train MLP & output file.
-    mlp_overfit = mlp_model()
-    saveout = sys.stdout
-    out_file = open('mlp_overfit_out.txt', 'w')
-    sys.stdout = out_file
-    fit = mlp_overfit.fit(train_mlp_x, train_mlp_y, validation_split=0.2, batch_size=128, nb_epoch=40, verbose=1)
-    hist = fit.history
-    print "Validation loss by epoch 40: ", hist['val_loss'][-1]
-    print "History has: ", hist
-    sys.stdout = saveout
-    out_file.close()
+    # # (2) Train MLP & output file.
+    # mlp_overfit = mlp_model()
+    # saveout = sys.stdout
+    # out_file = open('mlp_overfit_out.txt', 'w')
+    # sys.stdout = out_file
+    # fit = mlp_overfit.fit(train_mlp_x, train_mlp_y, validation_split=0.2, batch_size=128, nb_epoch=40, verbose=1)
+    # hist = fit.history
+    # print "Validation loss by epoch 40: ", hist['val_loss'][-1]
+    # print "History has: ", hist
+    # sys.stdout = saveout
+    # out_file.close()
 
-    # Plot the fitting history, shows overfitting
-    models_history = {}
-    models_history['mlp_1'] = hist
-    plot_mlp(models_history['mlp_1'], 'mlp_1')
+    # # Plot the fitting history, shows overfitting
+    # models_history = {}
+    # models_history['mlp_1'] = hist
+    # plot_mlp(models_history['mlp_1'], 'mlp_1')
 
     # (3) Train/predict with 3 fold CV train data. Save predicted weights as ensemble train set.
     mlp_final = mlp_model()
