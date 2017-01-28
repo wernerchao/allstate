@@ -21,7 +21,7 @@ def load_model(model_name, n_cv=3):
 if __name__ == '__main__':
     # Preprocessing data for MLP. Note that we don't log the output variable.
     train_mlp = pd.read_csv('../data/train.csv')
-    train_mlp_x, train_mlp_y = data_prep.data_prep(train_mlp)
+    train_mlp_x, train_mlp_y = data_prep.data_prep(train_mlp, True)
     mlp_x_train, mlp_x_test, mlp_y_train, mlp_y_test = train_test_split(train_mlp_x, train_mlp_y, test_size=0.25, random_state=31337)
 
     ### Aggregate weights to be passed into layer 2 model

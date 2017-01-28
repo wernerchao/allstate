@@ -86,6 +86,7 @@ def plot_mlp(hist, title):
     ax1.plot(hist['val_loss'][20:40], label='Validation Loss')
     ax2.legend()
     plt.show()
+    raw_input()
 
 
 if __name__ == '__main__':
@@ -96,26 +97,30 @@ if __name__ == '__main__':
 
     # (1) Preprocessing data. Note that we don't log the output variable.
     train_mlp = pd.read_csv('../data/train.csv')
-    train_mlp_x, train_mlp_y = data_prep.data_prep(train_mlp, True)
     test_mlp = pd.read_csv('../data/test.csv')
-    test_mlp_x, test_mlp_y = data_prep.data_prep(test_mlp, False)
+    all_features = pd.concat((train_mlp.iloc[:, 0:131], test_mlp.iloc[:, 0:131]))
+    all_mlp_x, all_mlp_y = data_prep.data_prep(all_features, False)
+    train_mlp_x = all_mlp_x[:train_mlp.shape[0]]
+    test_mlp_x = all_mlp_x[train_mlp.shape[0]:]
+    train_mlp_y = np.array(train_mlp['loss'])
+    print train_mlp_x.shape, train_mlp.shape, test_mlp_x.shape, test_mlp.shape
 
-    # # (2) Train MLP & output file.
-    # mlp_overfit = mlp_model()
-    # saveout = sys.stdout
-    # out_file = open('mlp_overfit_out.txt', 'w')
-    # sys.stdout = out_file
-    # fit = mlp_overfit.fit(train_mlp_x, train_mlp_y, validation_split=0.2, batch_size=128, nb_epoch=40, verbose=1)
-    # hist = fit.history
-    # print "Validation loss by epoch 40: ", hist['val_loss'][-1]
-    # print "History has: ", hist
-    # sys.stdout = saveout
-    # out_file.close()
+    # (2) Train MLP & output file.
+    mlp_overfit = mlp_model()
+    saveout = sys.stdout
+    out_file = open('mlp_overfit_out.txt', 'w')
+    sys.stdout = out_file
+    fit = mlp_overfit.fit(train_mlp_x, train_mlp_y, validation_split=0.2, batch_size=128, nb_epoch=40, verbose=1)
+    hist = fit.history
+    print "Validation loss by epoch 40: ", hist['val_loss'][-1]
+    print "History has: ", hist
+    sys.stdout = saveout
+    out_file.close()
 
-    # # Plot the fitting history, shows overfitting
-    # models_history = {}
-    # models_history['mlp_1'] = hist
-    # plot_mlp(models_history['mlp_1'], 'mlp_1')
+    # Plot the fitting history, shows overfitting
+    models_history = {}
+    models_history['mlp_1'] = hist
+    plot_mlp(models_history['mlp_1'], 'mlp_1')
 
     # (3) Train/predict with 3 fold CV train data. Save predicted weights as ensemble train set.
     mlp_final = mlp_model()
