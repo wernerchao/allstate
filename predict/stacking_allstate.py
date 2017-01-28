@@ -43,8 +43,8 @@ if __name__ == '__main__':
 
 
     print 'Loading weghts from models (prediction made on whole data set) as test sets...'
-    test_xgb = np.loadtxt('model_output/xgb_pred_test.txt')
-    test_mlp = np.loadtxt('model_output/mlp_pred_test.txt')
+    test_xgb = np.loadtxt('model_output_2/xgb_pred_test.txt')
+    test_mlp = np.loadtxt('model_output_2/mlp_pred_test.txt')
     print "test_mlp: ", test_mlp.shape
 
     ### Train layer 2 model. We use linear regression
