@@ -58,6 +58,9 @@ def nn_model():
     model.add(Dense(200, init = 'he_normal'))
     model.add(PReLU())
     model.add(Dropout(0.2))
+    model.add(Dense(50, init = 'he_normal'))
+    model.add(PReLU())
+    model.add(Dropout(0.2))
     model.add(Dense(1, init = 'he_normal'))
     model.compile(loss = 'mae', optimizer = 'adadelta')
     return model
@@ -157,4 +160,3 @@ if __name__ == '__main__':
     pred_test /= (nfolds*nbags)
     df = pd.DataFrame({'id': id_test, 'loss': pred_test})
     df.to_csv('submission_keras.csv', index = False)
-
