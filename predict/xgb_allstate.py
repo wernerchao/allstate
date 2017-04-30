@@ -63,7 +63,7 @@ if __name__ == '__main__':
         np.savetxt('xgb_pred_fold_{}.txt'.format(k), np.exp(xgboosting.predict(xtest)))
         np.savetxt('xgb_test_fold_{}.txt'.format(k), ytest)
 
-    # Training xgboost on test set (i.e. whole train set).
+    # Training xgboost on test set (i.e. whole test set).
     xgboosting.fit(train_xg_x, train_xg_y, verbose=True)
     print "Fitting on test set..."
     np.savetxt('xgb_pred_test.txt', np.exp(xgboosting.predict(test_xg_x)))

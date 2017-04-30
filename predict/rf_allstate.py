@@ -27,3 +27,4 @@ if __name__ == '__main__':
     score = rf.score(rf_x_test, rf_y_test)
     print "Random Forest MAE: ", mae
     print "Random Forest Score: ", score
+
