@@ -10,7 +10,7 @@ rng = numpy.random
 
 # Parameters
 learning_rate = 1.2
-training_epochs = 10
+training_epochs = 500
 display_step = 1
 
 # Training Data
@@ -39,17 +39,20 @@ Y = tf.placeholder(tf.float32, [None, 1])
 
 
 # Set model weights
-W = tf.Variable(tf.zeros([14, 1]), name="weight")
+# W = tf.Variable(tf.zeros([14, 1]), name="weight")
+W = tf.get_variable(name="weight", shape=[14, 1], regularizer=tf.contrib.layers.l2_regularizer(0.9))
 b = tf.Variable(tf.zeros([1]), name="bias")
 
 # Construct a linear model
 pred = tf.add(tf.matmul(X, W), b)
 
 # Mean squared error
-cost = tf.reduce_sum(tf.abs(pred-Y))/(n_samples)
+cost = tf.reduce_sum(tf.abs(pred-Y)) / (n_samples)
+regularized_cost = cost # This loss needs to be minimized
+
 # Gradient descent
 #  Note, minimize() knows to modify W and b because Variable objects are trainable=True by default
-optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(cost)
+optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(regularized_cost)
 
 # Initializing the variables
 init = tf.global_variables_initializer()
@@ -64,17 +67,14 @@ with tf.Session() as sess:
     count = 0
     plt.ion()
     for epoch in range(training_epochs):
-        for (x, y) in zip(train_X, train_Y):
-            x = numpy.reshape(x, (1, 14))
-            y = numpy.reshape(y, (1, 1))
-            sess.run(optimizer, feed_dict={X: x, Y: y})
-	    # c_1 = sess.run(cost, feed_dict={X: train_X, Y:train_Y})
-	    # print("Epoch:", '%04d' % (epoch+1), "cost=", "{:.9f}".format(c_1), \
-        #         "W=", sess.run(W), "b=", sess.run(b))
+        # for (x, y) in zip(train_X, train_Y): # Comment out for now as we run full batch.
+            # x = numpy.reshape(x, (1, 14))
+            # y = numpy.reshape(y, (1, 1))
+        sess.run(optimizer, feed_dict={X: train_X, Y: train_Y})
 
         # Display logs per epoch step
         if (epoch+1) % display_step == 0:
-            c = sess.run(cost, feed_dict={X: train_X, Y:train_Y})
+            c = sess.run(regularized_cost, feed_dict={X: train_X, Y:train_Y})
             print("!!!Epoch:", '%04d' % (epoch+1), "\n Training Cost=", "{:.9f}".format(c), \
                 "\nW=", sess.run(W), "\nb=", sess.run(b))
 
@@ -82,23 +82,23 @@ with tf.Session() as sess:
             testing_cost = sess.run(
                 tf.reduce_sum(tf.abs(pred - Y)) / (test_X.shape[0]),
                 feed_dict={X: test_X, Y: test_Y})  # same function as cost above
-            print("Testing cost=", testing_cost)
+            print("Cross Validation Cost=", testing_cost)
             print("Mean Absolute Error Difference:", (testing_cost - c))
             train_error.append(c)
             cv_error.append(testing_cost)
             count = count + 1
 
             # Graphic display
-            plt.plot(range(count), cv_error, '-ro', label='CV Error')
-            plt.plot(range(count), train_error, '-bo', label='Training Error')
+            plt.plot(range(count), cv_error, '-r', label='CV Error')
+            plt.plot(range(count), train_error, '-b', label='Training Error')
             handles, labels = plt.gca().get_legend_handles_labels()
             by_label = OrderedDict(zip(labels, handles))
             plt.legend(by_label.values(), by_label.keys())
             plt.pause(0.01)
 
     plt.ioff()
-    _ = plt.plot(range(count), cv_error, '-ro', label='CV Error')
-    _ = plt.plot(range(count), train_error, '-bo', label='Training Error')
+    _ = plt.plot(range(count), cv_error, '-r', label='CV Error')
+    _ = plt.plot(range(count), train_error, '-b', label='Training Error')
     handles, labels = plt.gca().get_legend_handles_labels()
     by_label = OrderedDict(zip(labels, handles))
     _ = plt.legend(by_label.values(), by_label.keys())
