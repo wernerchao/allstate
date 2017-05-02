@@ -10,10 +10,9 @@ import pandas as pd
 
 print 'Starting Data Preprocessing...'
 sqlContext = SQLContext(sc)
-train = pd.read_csv('./train.csv')
+train = pd.read_csv('./train.csv') # This will read csv file from local, not remote on hadoop.
 data = sqlContext.createDataFrame(train)
 print data.printSchema()
-
 
 # Rename 'loss' column as 'label'
 df = data.select([col(s).alias('label') if s == 'loss' else s for s in data.columns])
@@ -36,14 +35,14 @@ assembler = VectorAssembler(\
         outputCol = 'features')
 df_r = assembler.transform(df_r)
 
-
 # Train test split the Data.
 train, test = df_r.randomSplit([0.8, 0.2], seed=12345)
+print 'Finished data preprocessing...'
 
 # Fitting & predicting pipeline.
 evaluator = RegressionEvaluator(metricName="mae")
-lr = LinearRegression().setSolver("l-bfgs")
-grid = ParamGridBuilder().addGrid(lr.maxIter, [0, 1]).build()
+lr = LinearRegression(regParam=0.9, elasticNetParam=0.0).setSolver("l-bfgs")
+grid = ParamGridBuilder().addGrid(lr.maxIter, [0, 10]).build()
 lr_cv = CrossValidator(estimator=lr, estimatorParamMaps=grid, \
                        evaluator=evaluator, numFolds=3)
 lrModel = lr_cv.fit(train)
@@ -55,4 +54,3 @@ bestModel.save('./BestLinearModel') # Note: this will save on hadoop not local.
 pred_transformed_data = lrModel.transform(test)
 pred_score = evaluator.evaluate(pred_transformed_data)
 print evaluator.getMetricName(), 'accuracy: ', pred_score
-
