@@ -108,5 +108,24 @@ with tf.Session() as sess:
     training_cost = sess.run(cost, feed_dict={X: train_X, Y: train_Y})
     print("Training cost=", training_cost, "W=", sess.run(W), "b=", sess.run(b), '\n')
 
+    # Trying out Tensorboard
+    writer = tf.summary.FileWriter("output", sess.graph)
+	print(sess.run(h))
+	writer.close()
+
+    with tf.name_scope("MyOperationGroup"):
+    with tf.name_scope("Scope_A"):
+        a = tf.add(1, 2, name="Add_these_numbers")
+        b = tf.multiply(a, 3)
+    with tf.name_scope("Scope_B"):
+        c = tf.add(4, 5, name="And_These_ones")
+        d = tf.multiply(c, 6, name="Multiply_these_numbers")
+
+    with tf.name_scope("Scope_C"):
+        e = tf.multiply(4, 5, name="B_add")
+        f = tf.div(c, 6, name="B_mul")
+    g = tf.add(b, d)
+    h = tf.multiply(g, f)
+
 
 
