@@ -6,21 +6,31 @@ from pyspark.ml.tuning import CrossValidator
 from pyspark.ml.evaluation import RegressionEvaluator
 from pyspark.ml.tuning import TrainValidationSplit, ParamGridBuilder
 import pandas as pd
+import numpy as np
 
 
 print 'Starting Data Preprocessing...'
-sqlContext = SQLContext(sc)
-train = pd.read_csv('./train.csv') # This will read csv file from local, not remote on hadoop.
-data = sqlContext.createDataFrame(train)
-print data.printSchema()
+# sqlContext = SQLContext(sc)
+# train = pd.read_csv('./train.csv') # This will read csv file from local, not remote on hadoop.
+# data = sqlContext.createDataFrame(train) # This will take some time.
+# print data.printSchema()
 
-# Rename 'loss' column as 'label'
-df = data.select([col(s).alias('label') if s == 'loss' else s for s in data.columns])
+# Different way to load CSV, using the Spark CSV package. Note this reads the remote HDFS storage not local like above.
+df = sqlContext.read.load('./train.csv', 
+                          format='com.databricks.spark.csv', 
+                          header='true', 
+                          inferSchema='true')
+
+# Rename 'loss' column as 'label'.
+df = df.withColumnRenamed('loss', 'label')
 print df.printSchema()
+
+# Need to take Log1p of 'label' column.
+df.select('label') = df.select('label').map(lambda l: np.Log1p(l))
 
 # One hot encoding categorical features.
 inputCols = [column for column in df.columns if 'cat' in column]
-indexers = [StringIndexer(inputCol=column, outputCol=column+"_index").fit(df) for column in df.columns if 'cat' in column]
+indexers = [StringIndexer(inputCol=column, outputCol=column+"_index").fit(df) for column in df.columns if 'cat' in column] # Takes 30 min.
 pipeline = Pipeline(stages=indexers)
 df_r = pipeline.fit(df).transform(df)
 print df_r.printSchema()
@@ -41,16 +51,22 @@ print 'Finished data preprocessing...'
 
 # Fitting & predicting pipeline.
 evaluator = RegressionEvaluator(metricName="mae")
-lr = LinearRegression(regParam=0.9, elasticNetParam=0.0).setSolver("l-bfgs")
-grid = ParamGridBuilder().addGrid(lr.maxIter, [0, 10]).build()
+lr = LinearRegression().setSolver("l-bfgs")
+grid = ParamGridBuilder().addGrid(lr.maxIter, [10, 100]) \
+                         .addGrid(lr.regParam, [0.1, 0.5, 0.9]) \
+                         .addGrid(lr.elasticNetParam, [0.1, 0.5, 0.9]) \
+                         .build()
 lr_cv = CrossValidator(estimator=lr, estimatorParamMaps=grid, \
                        evaluator=evaluator, numFolds=3)
-lrModel = lr_cv.fit(train)
+lrModel = lr_cv.fit(train) # Takes 30 min to run.
 bestModel = lrModel.bestModel
 print 'MAE: ', lrModel.avgMetrics
+print 'Best Param (regParam): ', bestModel._java_obj.getRegParam()
+print 'Best Param (MaxIter): ', bestModel._java_obj.getMaxIter()
+print 'Best Param (elasticNetParam): ', bestModel._java_obj.getElasticNetParam()
 bestModel.save('./BestLinearModel') # Note: this will save on hadoop not local.
 
 # Predict on the hold out test set, and check the accuracy.
-pred_transformed_data = lrModel.transform(test)
+pred_transformed_data = bestModel.transform(test)
 pred_score = evaluator.evaluate(pred_transformed_data)
 print evaluator.getMetricName(), 'accuracy: ', pred_score
