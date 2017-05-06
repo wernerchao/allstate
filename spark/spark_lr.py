@@ -20,13 +20,14 @@ df = sqlContext.read.load('./train.csv',
                           format='com.databricks.spark.csv', 
                           header='true', 
                           inferSchema='true')
-
+df = df.cache()
 # Rename 'loss' column as 'label'.
 df = df.withColumnRenamed('loss', 'label')
 print df.printSchema()
 
 # Need to take Log1p of 'label' column.
-df.select('label') = df.select('label').map(lambda l: np.Log1p(l))
+df = df.withColumn('label', log1p('label'))
+df = df.drop('id')
 
 # One hot encoding categorical features.
 inputCols = [column for column in df.columns if 'cat' in column]
@@ -51,10 +52,11 @@ print 'Finished data preprocessing...'
 
 # Fitting & predicting pipeline.
 evaluator = RegressionEvaluator(metricName="mae")
-lr = LinearRegression().setSolver("l-bfgs")
-grid = ParamGridBuilder().addGrid(lr.maxIter, [10, 100]) \
-                         .addGrid(lr.regParam, [0.1, 0.5, 0.9]) \
-                         .addGrid(lr.elasticNetParam, [0.1, 0.5, 0.9]) \
+# lr = LinearRegression().setSolver("l-bfgs")
+lr = LinearRegression()
+grid = ParamGridBuilder().addGrid(lr.maxIter, [500]) \
+                         .addGrid(lr.regParam, [0]) \
+                         .addGrid(lr.elasticNetParam, [1]) \
                          .build()
 lr_cv = CrossValidator(estimator=lr, estimatorParamMaps=grid, \
                        evaluator=evaluator, numFolds=3)
@@ -64,9 +66,17 @@ print 'MAE: ', lrModel.avgMetrics
 print 'Best Param (regParam): ', bestModel._java_obj.getRegParam()
 print 'Best Param (MaxIter): ', bestModel._java_obj.getMaxIter()
 print 'Best Param (elasticNetParam): ', bestModel._java_obj.getElasticNetParam()
+print 'Param Map: ', bestModel._java_obj.extractParamMap()
 bestModel.save('./BestLinearModel') # Note: this will save on hadoop not local.
 
 # Predict on the hold out test set, and check the accuracy.
 pred_transformed_data = bestModel.transform(test)
 pred_score = evaluator.evaluate(pred_transformed_data)
 print evaluator.getMetricName(), 'accuracy: ', pred_score
+
+
+
+
+
+
+

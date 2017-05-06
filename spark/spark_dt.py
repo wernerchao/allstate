@@ -1,14 +1,18 @@
 from pyspark.sql.functions import *
 import pandas as pd
 import numpy as np
-from pyspark.mllib.regression import LabeledPoint
+from pyspark.ml import Pipeline
+from pyspark.ml.feature import VectorAssembler, StringIndexer, OneHotEncoder
 from pyspark.mllib.tree import DecisionTree
+
 
 print 'Loading data...'
 df = sqlContext.read.load('./train.csv', \
                           format='com.databricks.spark.csv', \
                           header=True, \
                           inferSchema=True)
+
+df.cache()
 
 print pd.DataFrame(df.take(5), columns=df.columns).transpose()
 print df.describe().toPandas().transpose()
@@ -24,16 +28,19 @@ df = df.drop('id')
 # data_to_plot = df.select(numerical_features).toPandas()
 # axs = pd.scatter_matrix(data_to_plot, figsize=(12, 12))
 
-# TODO: Need to one-hot encode categorical features.
+# One-hot encode categorical features.
+inputCols = [column for column in df.columns if 'cat' in column]
+indexers = [StringIndexer(inputCol=column, outputCol=column+"_index").fit(df) for column in df.columns if 'cat' in column] # Takes 30 min.
+pipeline = Pipeline(stages=indexers)
+df_r = pipeline.fit(df).transform(df)
+df_r = df_r.select([column for column in df_r.columns if column not in inputCols])
 
-# Label the data
-def labelData(data):
-    return data.rdd.map(lambda row: LabeledPoint(row[-1], row[:-1]))
-
-training_data, testing_data = labelData(df).randomSplit([0.8, 0.2])
-model = DecisionTree.trainClassifier(training_data, numClasses=2, maxDepth=2,
-                                     categoricalFeaturesInfo={1:2, 2:2},
-                                     impurity='gini', maxBins=32)
+# Vector assembling features.
+inputCols_assem = [x for x in df_r.columns if x not in ['id', 'label']]
+assembler = VectorAssembler(\
+        inputCols = inputCols_assem, \
+        outputCol = 'features')
+df_r = assembler.transform(df_r)
 
 
 
